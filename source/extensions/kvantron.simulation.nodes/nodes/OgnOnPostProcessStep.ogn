@@ -1,0 +1,20 @@
+{
+    "OnPostProcessStep": {
+        "version": 1,
+        "uiName": "On Post Process Step",
+        "icon": "icons/icon.svg",
+        "description": "Triggered right after SyntheticData's PostProcess graph.",
+        "categoryDefinitions": "config/CategoryDefinition.json",
+        "categories": "kvantron",
+        "language": "c++",
+        "inputs": {
+        },
+        "outputs": {
+            "execOut": {
+                "type": "execution",
+                "description": "Passes execution along.",
+                "uiName": "ExecOut"
+            }
+        }
+    }
+}

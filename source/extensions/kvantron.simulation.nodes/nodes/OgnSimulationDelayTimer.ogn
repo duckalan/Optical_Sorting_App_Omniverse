@@ -1,0 +1,48 @@
+{
+    "SimulationDelayTimer": {
+        "version": 1,
+        "uiName": "Simulation Delay Timer",
+        "icon": "icons/icon.svg",
+        "scheduling": [ "threadsafe" ],
+        "description": "A simulation delay timer that triggers execution after a configurable duration.",
+        "categoryDefinitions": "config/CategoryDefinition.json",
+        "categories": "kvantron",
+        "language": "c++",
+        "inputs": {
+            "execIn": {
+                "type": "execution",
+                "description": "Activate the timer.",
+                "uiName": "ExecIn"
+            },
+            "simulationTimeDelta": {
+                "type": "double",
+                "description": "The current simulation physics delta time (physics_dt). Default value is 1/60.",
+                "default": 0.0166666666666667,
+                "uiName": "Simulation Time Delta"
+            },
+            "delayDuration": {
+                "type": "double",
+                "description": "The duration, in seconds, that the timer delays after activation.",
+                "default": 1.0,
+                "uiName": "Delay Duration"
+            }
+        },
+        "outputs": {
+            "finished": {
+                "type": "execution",
+                "description": "Triggers execution after the delay.",
+                "uiName": "Finished"
+            },
+            "isFinished": {
+                "type": "bool",
+                "description": "True if the timer has finished; otherwise false.",
+                "uiName": "Is Finished"
+            },
+            "elapsedTime": {
+                "type": "double",
+                "description": "The elapsed time, in seconds.",
+                "uiName": "Elapsed Time"
+            }
+        }
+    }
+}

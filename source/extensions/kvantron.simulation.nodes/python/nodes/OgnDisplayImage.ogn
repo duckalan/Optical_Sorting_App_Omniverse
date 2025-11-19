@@ -1,0 +1,40 @@
+{
+    "DisplayImage": {
+        "version": 1,
+        "language": "python",
+        "icon": "icons/icon.svg",
+        "uiName": "Display Image",
+        "description": "Description",
+        "categoryDefinitions": "config/CategoryDefinition.json",
+        "categories": "kvantron",
+        "inputs": {
+            "execIn": {
+                "type": "execution",
+                "uiName": "ExecIn",
+                "description": "Signal to display a passed image."
+            },
+            "imageData": {
+                "type": "uchar[]",
+                "uiName": "Image data",
+                "description": "Must be in RGBA8 only by now."
+            },
+            "imageWidth": {
+                "type": "uint",
+                "uiName": "Image Width",
+                "description": "Description for this attribute"
+            },
+            "imageHeight": {
+                "type": "uint",
+                "uiName": "Image Height",
+                "description": "Description for this attribute"
+            },
+            "imageFormat": {
+                "type": "uint",
+                "uiName": "Image Format",
+                "description": "Use omni.ui.TextureFormat for decrypting."
+            }
+        },
+        "outputs": {
+        }
+    }
+}

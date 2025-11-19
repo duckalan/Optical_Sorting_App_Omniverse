@@ -1,0 +1,6 @@
+{
+    "categoryDefinitions": {
+        "$description": "Kvantron simulation nodes",
+        "kvantron": "Kvantron"
+    }
+}

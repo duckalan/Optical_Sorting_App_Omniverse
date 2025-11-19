@@ -1,0 +1,51 @@
+{
+    "SimulationDelay": {
+        "version": 1,
+        "uiName": "Simulation Delay",
+        "icon": "icons/icon.svg",
+        "description": "Simulation time based delay.",
+        "categoryDefinitions": "config/CategoryDefinition.json",
+        "categories": "kvantron",
+        "language": "c++",
+        "inputs": {
+            "tick": {
+                "type": "execution",
+                "description": "Regular execution tick if it was activated.",
+                "uiName": "Tick"
+            },
+            "activate": {
+                "type": "execution",
+                "description": "Start the delay. If it was already activated and it hasn't completed yet, does nothing.",
+                "uiName": "Activate"
+            },
+            "delayDuration": {
+                "type": "double",
+                "description": "TODO.",
+                "default": 1.0,
+                "uiName": "Delay Duration"
+            }
+        },
+        "outputs": {
+            "tick": {
+                "type": "execution",
+                "description": "Tick",
+                "uiName": "Tick"
+            },
+            "finished": {
+                "type": "execution",
+                "description": "Passes execution further after the delay.",
+                "uiName": "Finished"
+            },
+            "isFinished": {
+                "type": "bool",
+                "description": "Desc",
+                "uiName": "Is finished"
+            },
+            "elapsedTime": {
+                "type": "double",
+                "description": "Current elapsed time.",
+                "uiName": "Elapsed Time"
+            }
+        }
+    }
+}

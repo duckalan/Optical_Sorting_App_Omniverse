@@ -1,0 +1,41 @@
+{
+    "CaptureLdrColor": {
+        "version": 1,
+        "language": "python",
+        "icon": "icons/icon.svg",
+        "uiName": "Capture LdrColor",
+        "description": "Description",
+        "categoryDefinitions": "config/CategoryDefinition.json",
+        "categories": "kvantron",
+        "inputs": {
+            "ldrcolorAnnotatorNodePath": {
+                "type": "token",
+                "uiName": "LdrColor Annotator Node Path",
+                "description": "Description for this attribute",
+                "default": "/Render/PostProcess/SDGPipeline/OpticalSortingRp_LdrColorhostPtr"
+            }
+        },
+        "outputs": {
+            "capturedLdrColorCPU": {
+                "type": "uchar[]",
+                "uiName": "Captured LdrColor",
+                "description": "CPU"
+            },
+            "captureWidth": {
+                "type": "uint",
+                "uiName": "Capture Width",
+                "description": "Description for this attribute"
+            },
+            "captureHeight": {
+                "type": "uint",
+                "uiName": "Capture Height",
+                "description": "Description for this attribute"
+            },
+            "captureFormat": {
+                "type": "uint",
+                "uiName": "Capture Format",
+                "description": "Use omni.ui.TextureFormat for decrypting."
+            }
+        }
+    }
+}

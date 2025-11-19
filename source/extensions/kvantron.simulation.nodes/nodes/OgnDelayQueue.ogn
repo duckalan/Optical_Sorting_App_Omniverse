@@ -1,0 +1,41 @@
+{
+    "DelayQueue": {
+        "version": 1,
+        "uiName": "Delay Queue",
+        "icon": "icons/icon.svg",
+        "description": "A queue of simulation time based delays.",
+        "categoryDefinitions": "config/CategoryDefinition.json",
+        "categories": "kvantron",
+        "language": "c++",
+        "inputs": {
+            "activate": {
+                "type": "execution",
+                "description": "Enqueues one delay.",
+                "uiName": "Activate"
+            },
+            "tick": {
+                "type": "execution",
+                "description": "Ticks all delays in the queue.",
+                "uiName": "Tick"
+            },
+            "delayDuration": {
+                "type": "double",
+                "description": "Delay duration, in seconds.",
+                "default": 1.0,
+                "uiName": "Delay Duration"
+            }
+        },
+        "outputs": {
+            "finished": {
+                "type": "execution",
+                "description": "Passes the downstream execution further when a delay has been finished.",
+                "uiName": "Finished"
+            },
+            "elapsedTime": {
+                "type": "double[]",
+                "description": "Elapsed time for each delay in the queue.",
+                "uiName": "Elapsed Time"
+            }
+        }
+    }
+}

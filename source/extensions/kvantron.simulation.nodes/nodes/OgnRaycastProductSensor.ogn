@@ -1,0 +1,67 @@
+{
+    "LightbeamProductSensor": {
+        "version": 1,
+        "uiName": "Ligthbeam Product Sensor",
+        "icon": "icons/icon.svg",
+        "description": "Uses a Ligthbeam PhysX sensor to nearest raycast.",
+        "categoryDefinitions": "config/CategoryDefinition.json",
+        "categories": "kvantron",
+        "language": "c++",
+        "tags": [ "kvantron", "physics", "physx", "simulation", "collision" ],
+        "inputs": {
+            "execIn": {
+                "type": "execution",
+                "description": "Triggers the Lightbeam sensor to cast.",
+                "uiName": "ExecOut"
+            },
+            "origin": {
+                "type": "pointf[3]",
+                "description": "Ray origin",
+                "uiName": "Origin"
+            },
+            "direction": {
+                "type": "vectorf[3]",
+                "description": "Ray direction vector",
+                "uiName": "Direction"
+            },
+            "raycastRange": {
+                "type": "float",
+                "description": "Raycast distance. Use negative for infinite. If omitted, infinity is used.",
+                "uiName": "Distance"
+            }
+        },
+        "outputs": {
+            "execOut": {
+                "type": "execution",
+                "description": "Tick.",
+                "uiName": "Tick"
+            },
+            "newProductDetected": {
+                "type": "execution",
+                "description": "Triggered if a new product has been detected.",
+                "uiName": "New Product Detected"
+            },
+            "isNewProductDetected": {
+                "description": "aa",
+                "type": "bool",
+                "uiName": "Is New Product Detected"
+            },
+            "isProductDetected": {
+                "description": "aa",
+                "type": "bool",
+                "uiName": "Is Product Detected"
+            },
+            "detectedProductPrim": {
+                "description": "a",
+                "type": "target",
+                "uiName": "Detected Product Prim"
+            }
+        },
+        "typeDefinitions": {
+            "c++": {
+                "vectorf[3]": ["carb::Float3", ["carb/Types.h"]],
+                "pointf[3]": ["carb::Float3", ["carb/Types.h"]]
+            }
+        }
+    }
+}

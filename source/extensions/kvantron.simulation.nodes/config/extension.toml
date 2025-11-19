@@ -1,0 +1,34 @@
+[core]
+reloadable = true
+order = 0
+
+[package]
+version = "0.1.0"
+category = "graph"
+title = "Kvantron Simulation Nodes"
+description = "TODO"
+authors = ["Alexey Sidorov"]
+keywords = ["cpp", "python", "simulation", "sorting", "kvantron"]
+changelog = "docs/CHANGELOG.md"
+readme = "docs/README.md"
+preview_image = "data/preview.png"
+icon = "data/icon.png"
+
+[dependencies]
+"isaacsim.core.includes" = {}
+"isaacsim.core.simulation_manager" = {}
+"omni.graph.tools" = {}
+"omni.graph" = {}
+"omni.physics" = {}
+
+# define the Python module that the extension provides
+[[python.module]]
+name = "kvantron.simulation.nodes"
+
+# define the C++ plugins that the extension provides
+[[native.plugin]]
+path = "bin/*.plugin"
+recursive = false
+
+[settings]
+exts."kvantron.simulation.nodes".timeout = 5

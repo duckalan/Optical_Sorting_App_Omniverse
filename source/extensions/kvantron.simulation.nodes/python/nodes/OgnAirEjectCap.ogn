@@ -1,0 +1,30 @@
+{
+    "AirEjectCap": {
+        "version": 1,
+        "language": "python",
+        "icon": "icons/icon.svg",
+        "uiName": "Air Eject Cap",
+        "description": "Description",
+        "categoryDefinitions": "config/CategoryDefinition.json",
+        "categories": "kvantron",
+        "inputs": {
+            "execIn": {
+                "type": "execution",
+                "uiName": "ExecIn",
+                "description": "Signal to eject all caps in the bounding box."
+            },
+            "overlapOrigin": {
+                "type": "pointf[3]",
+                "uiName": "Overlap Origin",
+                "description": "Description for this attribute"
+            },
+            "boxSize": {
+                "type": "float",
+                "uiName": "Box Size",
+                "description": "Description for this attribute"
+            }
+        },
+        "outputs": {
+        }
+    }
+}

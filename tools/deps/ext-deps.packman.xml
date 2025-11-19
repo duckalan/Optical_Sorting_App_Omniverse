@@ -1,0 +1,11 @@
+<project toolsVersion="5.0">
+  <import path="../../_build/${platform_target}/${config}/kit/dev/all-deps.packman.xml">
+    <!-- <filter include="cuda" linkPath="../../_build/target-deps/cuda" /> -->
+    <filter include="usd-release" linkPath="../../_build/target-deps/usd/${config}"/>
+  </import>
+
+  <!-- OpenCV lib -->
+  <dependency name="opencv" linkPath="../../_build/target-deps/opencv">
+    <source path="C:/Users/Alexey/OpenCV/build" />
+  </dependency>
+</project>
