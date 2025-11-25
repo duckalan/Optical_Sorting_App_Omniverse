@@ -5,6 +5,7 @@ from pathlib import Path
 from pxr import Usd, Sdf, Gf, UsdGeom
 
 import omni.ext
+import omni.kit.app
 import omni.usd
 import omni.timeline
 import carb
@@ -14,17 +15,11 @@ from isaacsim.core.api.world import World
 from isaacsim.core.api.physics_context import PhysicsContext
 from isaacsim.core.simulation_manager import SimulationManager
 
-from .generate_inclusions import (
+from .inclusions import (
     create_inclusions_defect,
     vanish_inclusions_defect
 )
-
-# ASSETS HERE
-# manager = omni.kit.app.get_app().get_extension_manager()
-# ext_id = manager.get_enabled_extension_id("omni.replicator.core")
-# ext_path = manager.get_extension_path(ext_id)
-# MDL_FOLDER = Path(ext_path).joinpath("mdl").as_posix()
-
+from .uncoated_areas import create_uncoated_areas
 
 CAP_SPAWN_SCOPE_PATH = Sdf.Path("/World/Caps")
 PAINT_COLOR_VARIANT_SET_NAME = "Polypropelene_Paint_Color"
@@ -57,11 +52,11 @@ class CapSpawner:
         cap_asset_path: str
     ):
         self.cap_prims_deque: deque[CapInstance] = deque()
-        self.cap_alive_time: float = 4.0  # seconds
-        self.distance_between_pair_caps: float = 30
-        self.spawn_origin = Gf.Vec3d(0.0, 0.0, 162.4)
+        self.cap_alive_time: float = 30.0  # seconds
+        self.distance_between_pair_caps: float = 115
+        self.spawn_origin = Gf.Vec3d(0.0, 0.0, 262.4)
         self.cap_instance_path_template: str = "cap_"
-        self.cap_asset_path: str = Path(r"C:\Users\Alexey\optical-sorting-app\source\extensions\kvantron.simulation.nodes\data\optical_sorting_stage\Assets\PolypropyleneBottleCapSimReady.usd").as_posix()
+        self.cap_asset_path: str = cap_asset_path
         self.cap_paint_color: CapPaint = CapPaint.Blue
         self.timeline_stop_sub = None
 
@@ -83,8 +78,6 @@ class CapSpawner:
         cap_path = CAP_SPAWN_SCOPE_PATH.AppendPath(cap_name)
         cap_prim: Usd.Prim = stage.DefinePrim(cap_path)
         cap_xform = UsdGeom.Xform.Get(stage, cap_path)
-        deformed_scale = Gf.Vec3d(1, rep.random.uniform(0.8, 1.2), 1.11)
-        cap_xform.AddScaleOp().Set(deformed_scale)
 
         # Add the cap asset as a reference
         cap_prim_refs: Usd.References = cap_prim.GetReferences()
@@ -94,8 +87,18 @@ class CapSpawner:
         paint_color_vs: Usd.VariantSet = cap_prim.GetVariantSet(PAINT_COLOR_VARIANT_SET_NAME)
         paint_color_vs.SetVariantSelection(self.cap_paint_color.value)
 
-        # Create inclusion defects
-        projector_prims, modify_projection_material = create_inclusions_defect(cap_prim)
+        # TODO: extract it into a method and add some
+        # configurable probability for each defect.
+        projector_prims, modify_projection_material = None, None
+        r = rep.random.random()
+        if r < 0.2:
+            projector_prims, modify_projection_material = create_inclusions_defect(cap_prim)
+        elif 0.2 <= r < 0.5:
+            create_uncoated_areas(cap_prim)
+        # Change cap's ovaliy
+        else:
+            deformed_scale = Gf.Vec3d(1, rep.random.uniform(0.7, 1.3), 1)
+            cap_xform.AddScaleOp(opSuffix="Ovality").Set(deformed_scale)
 
         cap_instance = CapInstance(
             cap_prim,
@@ -146,7 +149,13 @@ class Extension(omni.ext.IExt):
         self.world._physics_context = PhysicsContext()
 
         # TODO: find asset and texture folders paths with ext_id
-        self.cap_spawner = CapSpawner("assetpath")
+        ext_manager = omni.kit.app.get_app().get_extension_manager()
+        ext_path = ext_manager.get_extension_path(ext_id)
+        assets_folder = Path(ext_path).joinpath(
+            "data", "optical_sorting_stage", "Assets"
+        )
+        cap_asset_path = assets_folder.joinpath("PolypropyleneBottleCapSimReady.usd").as_posix()
+        self.cap_spawner = CapSpawner(cap_asset_path)
 
         # Physics callback
         self._physics_callback_name = "ogn_spawn_bottle_cap_physics"
@@ -168,7 +177,6 @@ class Extension(omni.ext.IExt):
         self.world.clear_physics_callbacks()
         self.timeline_stop_sub = None
 
-    # Physics-step callback: called every simulation physics step
     def _on_physics_step(self, step_size: float) -> None:
         # Delete the oldest cap if it is timed out
         if not self.cap_spawner.is_empty:
@@ -183,7 +191,6 @@ class Extension(omni.ext.IExt):
         # Spawn a new cap if last one reached the required distance from origin
         else:
             newest_cap = self.cap_spawner.cap_prims_deque[-1]
-
             newest_cap_world_matrix: Gf.Matrix4d = omni.usd.get_world_transform_matrix(newest_cap.cap_prim)
             newest_cap_position: Gf.Vec3d = newest_cap_world_matrix.ExtractTranslation()
             # TODO: distance between their distances from boundaries

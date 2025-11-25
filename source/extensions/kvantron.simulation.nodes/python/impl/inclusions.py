@@ -1,8 +1,9 @@
 from pathlib import Path
 import omni.usd
 import omni.replicator.core as rep
-from pxr import Usd, Sdf
+from pxr import Usd, Sdf, UsdShade
 import omni.graph.core as og
+import omni.kit.material.library as mat_lib
 
 def _get_node_type(node: og.Node):
     stage = omni.usd.get_context().get_stage()
@@ -15,8 +16,6 @@ def _get_nodes_to_delete(
     projector_prims: rep.utils.ReplicatorItem,
     modify_projection_material: rep.utils.ReplicatorItem
 ) -> set[og.Node]:
-
-
     projector_prims_node: og.Node = projector_prims.node
     cube_xforms_paths: list[Sdf.Path] = projector_prims_node.get_attribute("inputs:primsIn").get()
     cubes_paths = [path.AppendChild("Cube") for path in cube_xforms_paths]
@@ -99,6 +98,20 @@ def create_inclusions_defect(
             surface_prims=[cap_inner_top_panel.GetPath().pathString],
             check_for_collisions=True
         )
+
+    # TODO: Clean PBR materials for each cap
+    # Create Project PBR Material inside the cap prim
+    # mtl_path =
+    # omni.kit.commands.execute(
+    #     "CreateMdlMaterialPrim",
+    #     mtl_url=mtl_url,
+    #     mtl_name="ProjectPBRMaterial",
+    #     mtl_path=mtl_path
+    # )
+    # mat_prim = stage.GetPrimAtPath(mtl_path)
+    # UsdShade.MaterialBindingAPI(cap_inner_top_panel_xform).Bind(
+    #     UsdShade.Material(mat_prim), UsdShade.Tokens.weakerThanDescendants
+    # )
 
     projection_materials = rep.create.projection_material(
         projector_prims,

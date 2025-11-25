@@ -20,6 +20,7 @@ icon = "data/icon.png"
 "omni.graph.tools" = {}
 "omni.graph" = {}
 "omni.physics" = {}
+"omni.replicator.core" = {}
 
 # define the Python module that the extension provides
 [[python.module]]
