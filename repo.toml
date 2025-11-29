@@ -70,7 +70,7 @@ vs_version = "vs2022"
 # vs_path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\"
 
 # Filter specifically to "Enterprise", "Professional", or "Community" editions of Visual Studio
-vs_edition = "Community"
+# vs_edition = "Community"
 
 # Filter by Visual Studio installations that have installed this version of the MSVC compiler.
 msvc_version = "v142"

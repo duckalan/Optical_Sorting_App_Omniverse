@@ -9,7 +9,9 @@ import omni.kit.app
 import omni.usd
 import omni.timeline
 import carb
+import carb.eventdispatcher
 import omni.replicator.core as rep
+from omni.syntheticdata.scripts.SyntheticData import SyntheticData
 
 from isaacsim.core.api.world import World
 from isaacsim.core.api.physics_context import PhysicsContext
@@ -19,7 +21,7 @@ from .inclusions import (
     create_inclusions_defect,
     vanish_inclusions_defect
 )
-from .uncoated_areas import create_uncoated_areas
+from .uncoated_areas import UncoatedAreasGenerator
 
 CAP_SPAWN_SCOPE_PATH = Sdf.Path("/World/Caps")
 PAINT_COLOR_VARIANT_SET_NAME = "Polypropelene_Paint_Color"
@@ -51,6 +53,7 @@ class CapSpawner:
         self,
         cap_asset_path: str
     ):
+        self.uncoated_areas_generator = UncoatedAreasGenerator()
         self.cap_prims_deque: deque[CapInstance] = deque()
         self.cap_alive_time: float = 30.0  # seconds
         self.distance_between_pair_caps: float = 115
@@ -91,10 +94,10 @@ class CapSpawner:
         # configurable probability for each defect.
         projector_prims, modify_projection_material = None, None
         r = rep.random.random()
-        if r < 0.2:
+        if r < 0.33:
             projector_prims, modify_projection_material = create_inclusions_defect(cap_prim)
-        elif 0.2 <= r < 0.5:
-            create_uncoated_areas(cap_prim)
+        elif 0.33 <= r < 0.66:
+            self.uncoated_areas_generator.generate_uncoated_areas(cap_prim)
         # Change cap's ovaliy
         else:
             deformed_scale = Gf.Vec3d(1, rep.random.uniform(0.7, 1.3), 1)
@@ -142,18 +145,70 @@ class CapSpawner:
         return len(self.cap_prims_deque) == 0
 
 class Extension(omni.ext.IExt):
+    # def __init__(self):
+    #     super.__init__(self)
+    #     self.cap_spawner: CapSpawner = None
+    #     self.world: World = None
+    #     self.timeline_stop_sub = None
+
     def on_startup(self, ext_id: str):
-        # It must be done only when a stage is loaded
-        # TODO: add UI to init CapSpawner
+        self.cap_spawner: CapSpawner = None
+        self.world: World = None
+        self.timeline_stop_sub = None
+
+        usd_context = omni.usd.get_context()
+        # Init CapSpawner and optical sensor if extension
+        # was enabled/re-enabled on an opened stage
+        if omni.usd.get_context().get_stage():
+            self.init_cap_spawner(ext_id=ext_id)
+
+        # Init CapSwapner and optical sensor when open a new stage
+        ed = carb.eventdispatcher.get_eventdispatcher()
+        self.e = ed.observe_event(
+            observer_name="Initialize cap spawner on stage opened",
+            order=0,
+            event_name=usd_context.stage_event_name(omni.usd.StageEventType.OPENED),
+            on_event=lambda e: self.init_cap_spawner(ext_id)
+        )
+
+        # self.e2 = ed.observe_event(
+        #     observer_name="Clear synthetic data graps before saving",
+        #     order=0,
+        #     event_name=usd_context.stage_event_name(omni.usd.StageEventType.CLOSING),
+        #     on_event=lambda e: self.remove_optical_sensor()
+        # )
+
+        # # self.e3 = ed.observe_event(
+        # #     observer_name="Recreate synthetic data graps after saving",
+        # #     order=0,
+        # #     event_name=usd_context.stage_event_name(omni.usd.StageEventType.SAVED),
+        # #     on_event=lambda e: self.init_optical_sensor()
+        # # )
+
+    def on_shutdown(self):
+        self.e = None
+        self.e2 = None
+        self.e3 = None
+        if self.cap_spawner:
+            self.cap_spawner.reset()
+        if self.world:
+            self.world.clear_physics_callbacks()
+        self.timeline_stop_sub = None
+
+    # TODO: add UI to init CapSpawner
+    def init_cap_spawner(self, ext_id):
         self.world: World = World.instance() if World.instance() else World()
         self.world._physics_context = PhysicsContext()
+        self.world.clear_physics_callbacks()
 
-        # TODO: find asset and texture folders paths with ext_id
+        # Find the cap asset path with ext_id
         ext_manager = omni.kit.app.get_app().get_extension_manager()
         ext_path = ext_manager.get_extension_path(ext_id)
+
         assets_folder = Path(ext_path).joinpath(
             "data", "optical_sorting_stage", "Assets"
         )
+        # assets_folder = Path(r"C:\Users\Alexey\optical-sorting-app\source\extensions\kvantron.simulation.nodes\data\optical_sorting_stage\Assets")
         cap_asset_path = assets_folder.joinpath("PolypropyleneBottleCapSimReady.usd").as_posix()
         self.cap_spawner = CapSpawner(cap_asset_path)
 
@@ -163,7 +218,6 @@ class Extension(omni.ext.IExt):
                 self._physics_callback_name,
                 callback_fn=self._on_physics_step
             )
-        carb.log_warn("Callback added")
 
         # Add the reset logic on Timeline Stop Event
         timeline = omni.timeline.get_timeline_interface()
@@ -171,11 +225,10 @@ class Extension(omni.ext.IExt):
             omni.timeline.TimelineEventType.STOP.value,
             lambda e: self.cap_spawner.reset()
         )
+        carb.log_warn("Cap spawner has been initialized")
 
-    def on_shutdown(self):
-        self.cap_spawner.reset()
-        self.world.clear_physics_callbacks()
-        self.timeline_stop_sub = None
+        self.init_optical_sensor()
+
 
     def _on_physics_step(self, step_size: float) -> None:
         # Delete the oldest cap if it is timed out
@@ -197,3 +250,43 @@ class Extension(omni.ext.IExt):
             distance_to_newest_cap = fabs(newest_cap_position.GetLength() - self.cap_spawner.spawn_origin.GetLength())
             if distance_to_newest_cap >= self.cap_spawner.distance_between_pair_caps:
                 self.cap_spawner.spawn_cap()
+
+    def init_optical_sensor(self):
+        if "SortingStage.usd" in omni.usd.get_context().get_stage_url():
+            stage: Usd.Stage = omni.usd.get_context().get_stage()
+            sensor_ldr_color_annotator = stage.GetPrimAtPath("/Render/PostProcess/SDGPipeline/OpticalSortingRp_LdrColorhostPtr")
+            sensor_camera = stage.GetPrimAtPath("/World/Cameras/SortingCamera")
+            if sensor_ldr_color_annotator.IsValid() and sensor_camera.IsValid():
+                carb.log_warn("Optical sensor is already initialized")
+                return
+
+            rep.utils._remove_prim_spec(stage.GetSessionLayer(), "/Render/OmniverseKit/HydraTextures/OpticalSortingRp")
+            rep.utils._remove_prim_spec(stage.GetRootLayer(), "/Render/OmniverseKit/HydraTextures/OpticalSortingRp")
+
+            rp = rep.create.render_product(
+            "/World/Cameras/SortingCamera",
+            # resolution=(1440, 1080),
+            resolution=(1000, 750),
+            name="OpticalSortingRp",
+            force_new=False
+            )
+
+            annotator = rep.AnnotatorRegistry.get_annotator("LdrColor")
+            annotator.attach(rp)
+            carb.log_warn("Optical sensor has been initialized")
+
+    def remove_optical_sensor(self):
+        stage = omni.usd.get_context().get_stage()
+        # syntheticdata_instance = SyntheticData.Get()
+        # if syntheticdata_instance is None:
+        #     SyntheticData.Initialize()
+        #     syntheticdata_instance = SyntheticData.Get()
+        # # Remove synthetic data graphs
+        # # Reset SyntheticData
+        SyntheticData.Get().reset()
+
+        # rep.utils._remove_prim_spec(stage.GetSessionLayer(), "/Render/PostProcess")
+        # rep.utils._remove_prim_spec(stage.GetRootLayer(), "/Render/PostProcess")
+        rep.utils._remove_prim_spec(stage.GetSessionLayer(), "/Render/OmniverseKit/HydraTextures/OpticalSortingRp")
+        rep.utils._remove_prim_spec(stage.GetRootLayer(), "/Render/OmniverseKit/HydraTextures/OpticalSortingRp")
+        carb.log_warn("Optical sensor has been removed")
