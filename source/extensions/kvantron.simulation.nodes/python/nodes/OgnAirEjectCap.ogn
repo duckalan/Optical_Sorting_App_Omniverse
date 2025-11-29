@@ -18,6 +18,16 @@
                 "uiName": "Overlap Origin",
                 "description": "Description for this attribute"
             },
+            "impulse": {
+                "type": "pointf[3]",
+                "uiName": "Impulse",
+                "description": "Description for this attribute"
+            },
+            "forceOrigin": {
+                "type": "pointf[3]",
+                "uiName": "Force Origin",
+                "description": "Description for this attribute"
+            },
             "boxSize": {
                 "type": "float",
                 "uiName": "Box Size",

@@ -20,7 +20,12 @@
 # platforms = ["windows-x86_64"]
 # download_only = false
 # no_deps = true
-
+# [[dependency]]
+# python = "../../_build/target-deps/python"
+# packages = [
+#     "types-usd==24.5.2",
+# ]
+# target = "../../_build/target-deps/pip_prebundle"
 
 # Another sample
 # [[dependency]]
