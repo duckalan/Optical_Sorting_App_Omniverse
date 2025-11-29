@@ -1,0 +1,150 @@
+{
+    "checkDefects": {
+        "version": 1,
+        "uiName": "Check Defects",
+        "icon": "icons/icon.svg",
+        "description": "Description",
+        "categoryDefinitions": "config/CategoryDefinition.json",
+        "categories": "kvantron",
+        "language": "c++",
+        "inputs": {
+            "execIn": {
+                "type": "execution",
+                "uiName": "ExecIn",
+                "description": "Signal to check."
+            },
+            "tick": {
+                "type": "execution",
+                "uiName": "Tick",
+                "description": "TODO."
+            },
+            "imageData": {
+                "type": "uchar[]",
+                "uiName": "Image data",
+                "description": "Must be in RGBA8 only by now."
+            },
+            "imageWidth": {
+                "type": "uint",
+                "uiName": "Image Width",
+                "description": "Width of the passed image."
+            },
+            "imageHeight": {
+                "type": "uint",
+                "uiName": "Image Height",
+                "description": "Height of the passed image."
+            },
+            "imageFormat": {
+                "type": "uint",
+                "uiName": "Image Format",
+                "description": "Format (omni.ui.TextureFormat) of the input image."
+            },
+            "enableOvalityCheck": {
+                "type": "bool",
+                "uiName": "Check Ovality",
+                "description": "TODO.",
+                "default": true
+            },
+            "enableInclusionCheck": {
+                "type": "bool",
+                "uiName": "Check Inclusions",
+                "description": "TODO.",
+                "default": true
+            },
+            "ovalityThreshold": {
+                "type": "double",
+                "uiName": "Ovality Threshold",
+                "description": "Ovality threshold value used for checking ovality.",
+                "default": 0.9
+            },
+            "enablePaintCheck": {
+                "type": "bool",
+                "uiName": "Check Uncoated Areas",
+                "description": "TODO.",
+                "default": true
+            },
+            "minAreaInclusion": {
+                "type": "double",
+                "uiName": "Min Inclusion Area",
+                "description": "TODO.",
+                "default": 50.0
+            },
+            "maxAreaInclusion": {
+                "type": "double",
+                "uiName": "Max Inclusion Area",
+                "description": "TODO.",
+                "default": 500.0
+            },
+            "inclusionCircularity": {
+                "type": "double",
+                "uiName": "Inclusion Circularity",
+                "description": "TODO.",
+                "default": 0.5
+            },
+            "minAreaPaintDefect": {
+                "type": "double",
+                "uiName": "Min Paint Defect Area",
+                "description": "TODO.",
+                "default": 500.0
+            },
+            "paintWhiteThreshold": {
+                "type": "double",
+                "uiName": "Paint White Threshold",
+                "description": "Threshold for difference from white (255).",
+                "default": 150.0
+            },
+            "isColorCap": {
+                "type": "bool",
+                "uiName": "Is Colored Cap",
+                "description": "True for Yellow/Blue/Gold, False for White.",
+                "default": true
+            }
+        },
+        "outputs": {
+            "execOut": {
+                "type": "execution",
+                "uiName": "ExecOut",
+                "description": "Sends a signal to continue the downstream after the image processing."
+            },
+            "defectDetected": {
+                "type": "execution",
+                "uiName": "Defect Detected",
+                "description": "Sends a signal to continue the downstream if any defect has been detected."
+            },
+            "tick": {
+                "type": "execution",
+                "uiName": "Tick",
+                "description": "TODO."
+            },
+            "ovalityImage": {
+                "type": "uchar[]",
+                "uiName": "Ovality Image",
+                "description": "Debug image after checking for ovality."
+            },
+            "inclusionsImage": {
+                "type": "uchar[]",
+                "uiName": "Inclusions Image",
+                "description": "Debug image after checking for inclusions."
+            },
+            "paintImage": {
+                "type": "uchar[]",
+                "uiName": "Uncoated Areas Image",
+                "description": "Debug image after checking for uncoated areas."
+            },
+            "imageWidth": {
+                "type": "uint",
+                "uiName": "Image Width",
+                "description": "The width of the processed image."
+            },
+            "imageHeight": {
+                "type": "uint",
+                "uiName": "Image Height",
+                "description": "The height of the processed image."
+            },
+            "imageFormat": {
+                "type": "uint",
+                "uiName": "Image Format",
+                "description": "The format (omni.ui.TextureFormat) of the processed image."
+            }
+        }
+    }
+}
