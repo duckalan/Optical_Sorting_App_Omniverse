@@ -29,9 +29,9 @@ private:
     bool isColored{ true };
     cv::Mat element1;
     cv::Mat element2;
-    cv::Mat grayForInclusions;
     cv::Mat imageForOvality;
     cv::Mat imageForInclusions;
+    cv::Mat imageForPaintDefects;
 
 public:
     static constexpr uint8_t BLUE_CAPS = 80;
@@ -43,6 +43,7 @@ public:
     CapProcessor(
         bool needCheckForOvality,
         bool needCheckForInclusions,
+        bool needCheckForPaintDefects,
         const cv::Mat& inputFrame
     )
     {
@@ -53,9 +54,12 @@ public:
         if (needCheckForInclusions) {
             inputFrame.copyTo(imageForInclusions);
         }
+        if (needCheckForPaintDefects) {
+            inputFrame.copyTo(imageForPaintDefects);
+        }
     }
 
-    bool CheckOvality(double threshold)
+    bool CheckForOvality(double threshold)
     {
         cv::Mat& image = imageForOvality;
         std::vector<cv::Point> contour = GetCapContour(image); // Uses internal decolorization
@@ -131,12 +135,77 @@ public:
         return inclusionsFound;
     }
 
+    bool CheckForPaintDefects(double minArea, double whiteThreshold)
+    {
+        cv::Mat& image = imageForPaintDefects;
+        cv::Mat hsv;
+        cv::cvtColor(image, hsv, cv::COLOR_BGR2HSV);
+
+        std::vector<cv::Point> capContour = GetCapContour(image);
+        if (capContour.empty()) return false;
+
+        cv::polylines(image, std::vector<std::vector<cv::Point>>{capContour}, true, cv::Scalar(255, 0, 0), 2);
+
+        // Create Mask for the Cap
+        cv::Mat capMask = cv::Mat::zeros(image.size(), CV_8UC1);
+        cv::fillPoly(capMask, std::vector<std::vector<cv::Point>>{capContour}, cv::Scalar(255));
+
+        // Logic from C#: Mask HSV
+        cv::Mat maskedHSV;
+        cv::bitwise_and(hsv, hsv, maskedHSV, capMask);
+
+        // C#: InRange(0, 255*0.05...) -> Defines "Color". 
+        // Note: OpenCV C++ HSV ranges are H:0-180, S:0-255, V:0-255
+        cv::Scalar lower(0, 255 * 0.05, 255 * 0.05);
+        cv::Scalar upper(180, 255 * 0.95, 255 * 0.95);
+
+        cv::Mat whiteMask;
+        cv::inRange(hsv, lower, upper, whiteMask); // This identifies "Colored" parts
+
+        cv::Mat defectsMask;
+        cv::bitwise_not(whiteMask, defectsMask); // This identifies "Not Colored" (White/Grey/Black) parts
+
+        cv::Mat maskedDefects;
+        cv::bitwise_and(defectsMask, capMask, maskedDefects); // Restrict to cap area
+
+        std::vector<std::vector<cv::Point>> contours;
+        cv::findContours(maskedDefects, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+        bool defectsFound = false;
+        for (const auto& cnt : contours) {
+            if (cv::contourArea(cnt) > minArea) {
+                // Check color intensity inside defect to confirm it is "white-ish" (paint missing or wrong)
+                cv::Mat contourMask = cv::Mat::zeros(image.size(), CV_8UC1);
+                cv::fillPoly(contourMask, std::vector<std::vector<cv::Point>>{cnt}, cv::Scalar(255));
+
+                cv::Scalar meanColor = cv::mean(image, contourMask);
+
+                // C# Logic: Math.Abs(meanColor.Val2 - 255) < minInpaintWhiteTgreshold
+                // Val2 in OpenCVSharp (BGR) is Red channel.
+                if (std::abs(meanColor[2] - 255.0) < whiteThreshold) {
+
+                    std::vector<std::vector<cv::Point>> defectVec = { cnt };
+                    cv::drawContours(image, defectVec, -1, cv::Scalar(0, 0, 255), 2);
+                    cv::Rect bbox = cv::boundingRect(cnt);
+                    cv::rectangle(image, bbox, cv::Scalar(0, 255, 255), 2);
+
+                    defectsFound = true;
+                }
+            }
+        }
+        return defectsFound;
+    }
+
     cv::Mat& getOvalityDebugImage() {
         return imageForOvality;
     }
 
     cv::Mat& getInclusionsDebugImage() {
         return imageForInclusions;
+    }
+
+    cv::Mat& getPaintDefectsDebugImage() {
+        return imageForPaintDefects;
     }
 private:
     void InitializeMorphologicalElements() {
@@ -271,13 +340,21 @@ public:
         CapProcessor processor = CapProcessor(
             db.inputs.enableOvalityCheck(),
             db.inputs.enableInclusionCheck(),
+            db.inputs.enablePaintCheck(),
             inputFrame
         );
 
         bool isAnyDefectFound = false;
 
-        if (db.inputs.enableOvalityCheck()) {
-            isAnyDefectFound = isAnyDefectFound || processor.CheckOvality(db.inputs.ovalityThreshold());
+        if (db.inputs.enableOvalityCheck())
+        {
+            bool foundOvality = processor.CheckForOvality(db.inputs.ovalityThreshold());
+            isAnyDefectFound = isAnyDefectFound || foundOvality;
+            if (foundOvality)
+            {
+                db.logWarning("Detected an ovality defect");
+            }
+
             cv::Mat& ovalityImage = processor.getOvalityDebugImage();
             cv::cvtColor(ovalityImage, ovalityImage, cv::COLOR_BGR2RGBA);
             db.outputs.ovalityImage().resize(ovalityImage.total() * ovalityImage.elemSize());
@@ -286,14 +363,20 @@ public:
                 ovalityImage.data,
                 ovalityImage.total() * ovalityImage.elemSize()
             );
-            db.logWarning("Detected an ovality defect");
         }
-        if (db.inputs.enableInclusionCheck()) {
-            isAnyDefectFound = isAnyDefectFound || processor.CheckForInclusions(
+        if (db.inputs.enableInclusionCheck())
+        {
+            bool foundInclusions = processor.CheckForInclusions(
                 db.inputs.minAreaInclusion(),
                 db.inputs.maxAreaInclusion(),
                 db.inputs.inclusionCircularity()
             );
+            isAnyDefectFound = isAnyDefectFound || foundInclusions;
+            if (foundInclusions)
+            {
+                db.logWarning("Detected an inclusions defect");
+            }
+
             cv::Mat& inclusionsImage = processor.getInclusionsDebugImage();
             cv::cvtColor(inclusionsImage, inclusionsImage, cv::COLOR_BGR2RGBA);
             db.outputs.inclusionsImage().resize(inclusionsImage.total() * inclusionsImage.elemSize());
@@ -302,11 +385,31 @@ public:
                 inclusionsImage.data,
                 inclusionsImage.total() * inclusionsImage.elemSize()
             );
-            db.logWarning("Detected inclusions defect");
+        }
+        if (db.inputs.enablePaintCheck())
+        {
+            bool foundPaintDefect = processor.CheckForPaintDefects(
+                db.inputs.minAreaPaintDefect(),
+                db.inputs.paintWhiteThreshold()
+            );
+            isAnyDefectFound = isAnyDefectFound || foundPaintDefect;
+            if (foundPaintDefect) {
+                db.logWarning("Detected a paint defect");
+           }
+
+            cv::Mat& paintDefectsImage = processor.getPaintDefectsDebugImage();
+            cv::cvtColor(paintDefectsImage, paintDefectsImage, cv::COLOR_BGR2RGBA);
+            db.outputs.paintImage().resize(paintDefectsImage.total() * paintDefectsImage.elemSize());
+            std::memcpy(
+                db.outputs.paintImage().data(),
+                paintDefectsImage.data,
+                paintDefectsImage.total() * paintDefectsImage.elemSize()
+            );
+            
         }
 
-        if (isAnyDefectFound) {
-            
+        if (isAnyDefectFound)
+        {
             iActionGraph->setExecutionEnabled(outputs::defectDetected.token(), kAccordingToContextIndex);
         }
         else
