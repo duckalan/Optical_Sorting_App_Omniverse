@@ -1,11 +1,11 @@
-from kvantron.simulation.nodes.ogn.OgnCaptureLdrColorDatabase import OgnCaptureLdrColorDatabase
+from kvantron.simulation.nodes.ogn.OgnGrabFrameDatabase import OgnGrabFrameDatabase
 import omni.graph.core as og
 import omni.replicator.core as rep
 import numpy as np
 
-class OgnCaptureLdrColor:
+class OgnGrabFrame:
     @staticmethod
-    def compute(db: OgnCaptureLdrColorDatabase):
+    def compute(db: OgnGrabFrameDatabase):
         ldrcolor_annotator_node: og.Node = og.get_node_by_path(db.inputs.ldrcolorAnnotatorNodePath)
 
         if ldrcolor_annotator_node is None:
@@ -19,12 +19,12 @@ class OgnCaptureLdrColor:
                 annotator_id=db.inputs.ldrcolorAnnotatorNodePath,
             )
 
-        db.outputs.capturedLdrColorCPU_size = rgba8.size
-        if db.outputs.capturedLdrColorCPU_size == 0:
-            db.log_error("Captured none.")
+        if rgba8.size == 0:
+            #db.log_error("Captured none.")
             return False
-        
-        db.outputs.capturedLdrColorCPU = rgba8
+
+        db.outputs.grabbedFrame_size = rgba8.size
+        db.outputs.grabbedFrame = rgba8
         db.outputs.captureWidth = ldrcolor_annotator_node.get_attribute('outputs:width').get()
         db.outputs.captureHeight = ldrcolor_annotator_node.get_attribute('outputs:height').get()
         db.outputs.captureFormat = ldrcolor_annotator_node.get_attribute('outputs:format').get()

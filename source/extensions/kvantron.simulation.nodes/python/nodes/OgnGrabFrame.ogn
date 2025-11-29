@@ -1,9 +1,9 @@
 {
-    "CaptureLdrColor": {
+    "GrabFrame": {
         "version": 1,
         "language": "python",
         "icon": "icons/icon.svg",
-        "uiName": "Capture LdrColor",
+        "uiName": "Grab Frame",
         "description": "Description",
         "categoryDefinitions": "config/CategoryDefinition.json",
         "categories": "kvantron",
@@ -16,9 +16,9 @@
             }
         },
         "outputs": {
-            "capturedLdrColorCPU": {
+            "grabbedFrame": {
                 "type": "uchar[]",
-                "uiName": "Captured LdrColor",
+                "uiName": "Grabbed Frame",
                 "description": "CPU"
             },
             "captureWidth": {
