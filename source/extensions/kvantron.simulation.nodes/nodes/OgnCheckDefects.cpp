@@ -72,15 +72,15 @@ public:
         float minorAxis = std::min(ellipse.size.width, ellipse.size.height);
         float ratio = (majorAxis > 0) ? (minorAxis / majorAxis) : 0.0f;
 
-        bool isOk = ratio >= threshold;
+        bool isOval = ratio < threshold;
 
-        cv::Scalar color = isOk ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255);
+        cv::Scalar color = isOval ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0);
         cv::ellipse(image, ellipse, color, 2);
 
         std::string txt = "Ratio: " + std::to_string(ratio);
         cv::putText(image, txt, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 1, color, 2);
 
-        return isOk;
+        return isOval;
     }
 
     bool CheckForInclusions(
