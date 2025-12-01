@@ -1,5 +1,14 @@
 # Description
-TODO
+This is an example of a digital twin (or at least a prototype) of a real optical sorting line on a factory producing polypropylene bottle caps. The twin uses custom OmiGraph logic, including:
+- A product sensor node based on PhysX raycasting;
+- A node which grabs a frame (LdrColor) from an optical sensor;
+- A node with OpenCV algorithms processing grabbed frames;
+- Nodes with simulation time based delays.
+
+The project also includes synthetic generation of some defects on caps:
+- Ovality;
+- Inclusions;
+- Uncoated areas.
 
 # Prerequisites
 Common:
